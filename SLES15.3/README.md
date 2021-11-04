@@ -6,11 +6,11 @@ There are pre-built packages in the releases section of this project. The instru
 
 In order to build the package you need to have a working [docker](https://www.docker.com/) environment and "prepare" the building container:
 
-`docker build -t python-altinstall:all .`
+`docker build -t python-altinstall:sles15.3 .`
 
 Then, to build the latest version:
 
-`docker run --rm --volume "$PWD"/releases:/root/rpmbuild/SRPMS --volume "$PWD"/releases:/root/rpmbuild/RPMS python-altinstall:all python310-altinstall.spec`
+`docker run --rm --volume "$PWD"/releases:/root/rpmbuild/SRPMS --volume "$PWD"/releases:/root/rpmbuild/RPMS python-altinstall:sles15.3 python310-altinstall.spec`
 
 The resulting RPMs (including source RPMs) should land in the `releases` directory. There might be some issues with permissions, so you might want to run:
 
