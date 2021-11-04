@@ -1,4 +1,4 @@
-# SLES/openSUSE 15.3 and compatibles
+# RHEL/Centos 7 and compatibles
 
 ## Building RPMs
 
