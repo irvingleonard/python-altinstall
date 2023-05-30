@@ -1,6 +1,6 @@
 
 Name:           python310-altinstall
-Version:        3.10.0
+Version:        3.10.11
 Release:        1%{?dist}
 Summary:        Interpreter of the Python programming language
 
@@ -69,5 +69,7 @@ make altinstall DESTDIR=%{buildroot}
 %doc /usr/local/share/man
 
 %changelog
-* Wed Oct 13 2021 Irving Leonard <irvingleonard@gmail.com> 3.10.0-1
+* Tue May 30 2023 Irving Leonard <irvingleonard@github.com> 3.10.11-1
+- Upgraded to version 3.10.11
+* Wed Oct 13 2021 Irving Leonard <irvingleonard@github.com> 3.10.0-1
 - Initial RPM release
