@@ -3,7 +3,7 @@
 %global __os_install_post %(echo '%{__os_install_post}' | sed -e 's!/usr/lib[^[:space:]]*/brp-python-bytecompile[[:space:]].*$!!g')
 
 Name:           python39-altinstall
-Version:        3.9.7
+Version:        3.9.16
 Release:        1%{?dist}
 Summary:        Interpreter of the Python programming language
 
@@ -69,6 +69,8 @@ find %{buildroot} -type f -name '*.pyc' -delete
 %doc /usr/local/share/man/man1/python3.9.1.gz
 
 %changelog
+* Tue May 30 2023 Irving Leonard <irvingleonard@github.com> 3.9.16-1
+- Upgraded to version 3.9.16
 * Thu Nov 4 2021 Irving Leonard <irvingleonard@github.com> 3.9.7-1
 - Upgraded to version 3.9.7
 * Mon Mar 8 2021 Irving Leonard <mm-irvingleonard@github.com> 3.9.2-1
