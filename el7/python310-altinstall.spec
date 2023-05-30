@@ -3,7 +3,7 @@
 %global __os_install_post %(echo '%{__os_install_post}' | sed -e 's!/usr/lib[^[:space:]]*/brp-python-bytecompile[[:space:]].*$!!g')
 
 Name:           python310-altinstall
-Version:        3.10.0
+Version:        3.10.11
 Release:        1%{?dist}
 Summary:        Interpreter of the Python programming language
 
@@ -69,5 +69,7 @@ find %{buildroot} -type f -name '*.pyc' -delete
 %doc /usr/local/share/man/man1/python3.10.1.gz
 
 %changelog
+* Tue May 30 2023 Irving Leonard <irvingleonard@github.com> 3.10.11-1
+- Upgraded to version 3.10.11
 * Thu Nov 4 2021 Irving Leonard <irvingleonard@github.com> 3.10.0-1
 - Upgraded to version 3.10.0
