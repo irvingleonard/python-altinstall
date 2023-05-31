@@ -18,7 +18,7 @@ BuildRequires:  gdbm-devel
 BuildRequires:  libffi-devel
 BuildRequires:  libuuid-devel
 BuildRequires:  make
-BuildRequires:  openssl-devel
+BuildRequires:  openssl11-devel
 BuildRequires:  python3
 BuildRequires:  readline-devel
 BuildRequires:  sqlite-devel

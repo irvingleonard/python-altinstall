@@ -1,7 +1,7 @@
 FROM centos:7
 
 RUN yum -y upgrade
-RUN yum -y install rpmdevtools yum-utils
+RUN yum -y install rpmdevtools yum-utils epel-release
 
 WORKDIR /root
 RUN rpmdev-setuptree
