@@ -4,7 +4,7 @@
 
 Name:           python38-altinstall
 Version:        3.8.16
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Interpreter of the Python programming language
 
 License:        Python
@@ -25,9 +25,6 @@ BuildRequires:  sqlite-devel
 BuildRequires:  tk-devel
 BuildRequires:  uuid-devel
 BuildRequires:  xz-devel
-Provides:       /usr/local/bin/python3.8
-# Don't even bother with default python. It's required by this package, that's why is listed here.
-Provides:       /usr/local/bin/python
 
 %description
 Python is an accessible, high-level, dynamically typed, interpreted programming
@@ -52,6 +49,7 @@ make altinstall DESTDIR=%{buildroot}
 find %{buildroot} -type f -name '*.pyc' -delete
 # Compress man page
 %{__gzip} --name --best %{buildroot}/usr/local/share/man/man1/python3.8.1
+ln -s ./python3.8 %{buildroot}/usr/local/bin/python
 
  
 %files
@@ -67,8 +65,11 @@ find %{buildroot} -type f -name '*.pyc' -delete
 /usr/local/include/python3.8
 /usr/local/lib/python3.8
 %doc /usr/local/share/man/man1/python3.8.1.gz
+/usr/local/bin/python
 
 %changelog
+* Wed May 31 2023 Irving Leonard <irvingleonard@github.com> 3.9.16-2
+- Working default python
 * Tue May 30 2023 Irving Leonard <irvingleonard@github.com> 3.8.16-1
 - Upgraded to version 3.8.16
 * Thu Nov 4 2021 Irving Leonard <irvingleonard@github.com> 3.8.12-1
