@@ -4,12 +4,13 @@
 
 Name:           python310-altinstall
 Version:        3.10.11
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Interpreter of the Python programming language
 
 License:        Python
 URL:            https://www.python.org/
 Source0:        https://www.python.org/ftp/python/%{version}/Python-%{version}.tgz
+Patch0:			python310-modules_setup.patch
 
 BuildRequires:  bzip2-devel
 BuildRequires:  gcc
@@ -25,9 +26,6 @@ BuildRequires:  sqlite-devel
 BuildRequires:  tk-devel
 BuildRequires:  uuid-devel
 BuildRequires:  xz-devel
-Provides:       /usr/local/bin/python3.10
-# Don't even bother with default python. It's required by this package, that's why is listed here.
-Provides:       /usr/local/bin/python
 
 %description
 Python is an accessible, high-level, dynamically typed, interpreted programming
@@ -39,6 +37,7 @@ This uses the upstream method using altinstall which would install in /usr/local
 
 %prep
 %setup -q -n Python-%{version}
+%patch0 -p1
 
 
 %build
@@ -52,8 +51,8 @@ make altinstall DESTDIR=%{buildroot}
 find %{buildroot} -type f -name '*.pyc' -delete
 # Compress man page
 %{__gzip} --name --best %{buildroot}/usr/local/share/man/man1/python3.10.1
+ln -s ./python3.10 %{buildroot}/usr/local/bin/python
 
- 
 %files
 /usr/local/bin/2to3-3.10
 /usr/local/bin/idle3.10
@@ -67,8 +66,11 @@ find %{buildroot} -type f -name '*.pyc' -delete
 /usr/local/include/python3.10
 /usr/local/lib/python3.10
 %doc /usr/local/share/man/man1/python3.10.1.gz
+/usr/local/bin/python
 
 %changelog
+* Wed May 31 2023 Irving Leonard <irvingleonard@github.com> 3.10.11-2
+- Fixed the OpenSSL requirement
 * Tue May 30 2023 Irving Leonard <irvingleonard@github.com> 3.10.11-1
 - Upgraded to version 3.10.11
 * Thu Nov 4 2021 Irving Leonard <irvingleonard@github.com> 3.10.0-1
