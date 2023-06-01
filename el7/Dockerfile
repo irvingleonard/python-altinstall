@@ -12,5 +12,6 @@ COPY *.spec ./
 
 RUN for spec_file in *.spec; do yum-builddep -y "$spec_file"; done
 RUN for spec_file in *.spec; do spectool -g -R "$spec_file"; done
+COPY *.patch /root/rpmbuild/SOURCES/
 
 ENTRYPOINT ["rpmbuild", "-ba"]
