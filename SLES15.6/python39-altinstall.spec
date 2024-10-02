@@ -13,11 +13,13 @@ BuildRequires:	gcc-c++
 BuildRequires:	gdbm-devel
 BuildRequires:	libbz2-devel
 BuildRequires:	libffi-devel
+BuildRequires:	libnsl-devel
 BuildRequires:	libopenssl-devel
 BuildRequires:	libuuid-devel
 BuildRequires:	readline-devel
 BuildRequires:	sqlite3-devel
 BuildRequires:	tk-devel
+BuildRequires:	xz-devel
 
 ## Fixes
 # disable shebang mangling of python scripts
@@ -40,7 +42,7 @@ autoreconf -ivf
 
 %build
 env CXX=`which g++` %{_builddir}/Python-%{version}/configure --enable-optimizations --with-lto --enable-loadable-sqlite-extensions
-make buildbottest
+#make buildbottest
 
 %install
 rm -rf %{buildroot}
@@ -50,17 +52,18 @@ make altinstall DESTDIR=%{buildroot}
 
  
 %files
-#/usr/local/bin/2to3-3.10
-#/usr/local/bin/idle3.10
-#/usr/local/bin/pip3.10
-#/usr/local/bin/pydoc3.10
-#/usr/local/bin/python3.10
-#/usr/local/bin/python3.10-config
+/usr/local/bin/2to3-3.9
+/usr/local/bin/idle3.9
+/usr/local/bin/pip3.9
+/usr/local/bin/pydoc3.9
+/usr/local/bin/python3.9
+/usr/local/bin/python3.9-config
 /usr/local/include/python3.9
-#/usr/local/lib/pkgconfig
+/usr/local/lib/libpython3.9.a
+/usr/local/lib/pkgconfig/python-3.9-embed.pc
+/usr/local/lib/pkgconfig/python-3.9.pc
 /usr/local/lib/python3.9
-#/usr/local/lib/libpython3.10.a
-#%doc /usr/local/share/man
+%doc /usr/local/share/man/man1/python3.9.1.gz
 
 %changelog
 * Wed Oct 2 2024 Irving Leonard <irvingleonard@github.com> 3.9.20-1
