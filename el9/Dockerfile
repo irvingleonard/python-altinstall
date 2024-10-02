@@ -1,7 +1,7 @@
 FROM quay.io/centos/centos:stream9
 
 RUN dnf -y upgrade
-RUN dnf -y install rpmdevtools epel-release
+RUN dnf -y install rpmdevtools
 RUN dnf config-manager --enable crb
 
 WORKDIR /root

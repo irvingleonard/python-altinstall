@@ -1,4 +1,5 @@
-# RHEL/Centos 9 and compatibles
+# RHEL 9 and compatibles
+###### (currently using Centos Stream 9)
 
 ## Building RPMs
 
