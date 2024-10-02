@@ -14,7 +14,7 @@ Then, to build the latest version:
 
 The resulting RPMs (including source RPMs) should land in the `releases` directory. There might be some issues with permissions, so you might want to run:
 
-```sudo chown -R `whoami` releases/*```
+```sudo chown -R `whoami` releases```
 
 ## Updating SPECs
 
