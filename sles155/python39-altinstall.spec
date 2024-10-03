@@ -1,3 +1,4 @@
+%define dist .sles155
 Name:           python39-altinstall
 Version:        3.9.20
 Release:        1%{?dist}
