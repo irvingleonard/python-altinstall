@@ -1,8 +1,7 @@
-FROM euleros:2.2
+FROM openeuler/openeuler:24.03
 
-RUN yum -y upgrade
-RUN yum -y install rpmdevtools
-RUN dnf config-manager --enable crb
+RUN dnf -y upgrade
+RUN dnf -y install rpmdevtools dnf-plugins-core
 
 WORKDIR /root
 RUN rpmdev-setuptree
