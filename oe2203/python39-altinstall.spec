@@ -1,3 +1,4 @@
+%define dist .oe2203
 Name:           python39-altinstall
 Version:        3.9.20
 Release:        1%{?dist}
@@ -15,6 +16,7 @@ BuildRequires:  libffi-devel
 BuildRequires:  libnsl2-devel
 BuildRequires:  libuuid-devel
 BuildRequires:  openssl-devel
+BuildRequires:  make
 BuildRequires:  readline-devel
 BuildRequires:  sqlite-devel
 BuildRequires:  tk-devel
@@ -38,7 +40,7 @@ This uses the upstream method using altinstall which would install in /usr/local
 
 %build
 env CXX=/usr/bin/c++ %{_builddir}/Python-%{version}/configure --enable-optimizations --with-lto --enable-loadable-sqlite-extensions
-#make buildbottest
+make buildbottest
 
 %install
 rm -rf %{buildroot}

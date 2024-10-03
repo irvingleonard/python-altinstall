@@ -1,4 +1,4 @@
-# EulerOS 2 and compatibles
+# openEuler 24.09 and compatibles
 
 ## Building RPMs
 
@@ -6,15 +6,15 @@ There are pre-built packages in the releases section of this project. The instru
 
 In order to build the package you need to have a working [docker](https://www.docker.com/) environment and "prepare" the building container:
 
-`docker build -t python-altinstall:hce2 .`
+`docker build -t python-altinstall:oe2409 .`
 
 Then, to build the latest version:
 
-`docker run --rm --volume "$PWD"/releases:/root/rpmbuild/SRPMS --volume "$PWD"/releases:/root/rpmbuild/RPMS python-altinstall:hce2 python310-altinstall.spec`
+`docker run --rm --volume "$PWD"/releases:/root/rpmbuild/SRPMS --volume "$PWD"/releases:/root/rpmbuild/RPMS python-altinstall:oe2409 python310-altinstall.spec`
 
 The resulting RPMs (including source RPMs) should land in the `releases` directory. There might be some issues with permissions, so you might want to run:
 
-```sudo chown -R `whoami` releases/*```
+```sudo chown -R `whoami` releases```
 
 ## Updating SPECs
 
