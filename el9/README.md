@@ -11,7 +11,7 @@ In order to build the package you need to have a working [docker](https://www.do
 
 Then, to build the latest version:
 
-`docker run --rm --volume "$PWD"/releases:/root/rpmbuild/SRPMS --volume "$PWD"/releases:/root/rpmbuild/RPMS python-altinstall:el9 python310-altinstall.spec`
+`docker run --rm --volume "$PWD"/releases:/root/rpmbuild/SRPMS --volume "$PWD"/releases:/root/rpmbuild/RPMS python-altinstall:el9 python312-altinstall.spec`
 
 The resulting RPMs (including source RPMs) should land in the `releases` directory. There might be some issues with permissions, so you might want to run:
 
