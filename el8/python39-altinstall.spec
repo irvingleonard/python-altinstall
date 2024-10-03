@@ -39,7 +39,7 @@ This uses the upstream method using altinstall which would install in /usr/local
 
 %build
 env CXX=/usr/bin/c++ %{_builddir}/Python-%{version}/configure --enable-optimizations --enable-loadable-sqlite-extensions
-#make buildbottest
+make buildbottest
 
 %install
 rm -rf %{buildroot}

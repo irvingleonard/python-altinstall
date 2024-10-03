@@ -40,17 +40,15 @@ This uses the upstream method using altinstall which would install in /usr/local
 %setup -q -n Python-%{version}
 autoreconf -ivf
 
-
 %build
 env CXX=`which g++` %{_builddir}/Python-%{version}/configure --enable-optimizations --with-lto --enable-loadable-sqlite-extensions
-#make buildbottest
+make buildbottest
 
 %install
 rm -rf %{buildroot}
 make altinstall DESTDIR=%{buildroot}
 # Compress man page
 %{__gzip} --name --best %{buildroot}/usr/local/share/man/man1/python3.9.1
-
  
 %files
 /usr/local/bin/2to3-3.9
