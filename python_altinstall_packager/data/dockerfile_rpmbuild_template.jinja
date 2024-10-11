@@ -1,0 +1,25 @@
+{% if from_image is defined -%}
+FROM {{ from_image }}
+
+{% endif -%}
+{% if image_preparation is defined -%}
+# Preparing base image
+{% for command_line in image_preparation -%}
+RUN {{ command_line }}
+{% endfor %}
+{% endif -%}
+WORKDIR /root
+RUN rpmdev-setuptree
+VOLUME ["/root/rpmbuild/SRPMS", "/root/rpmbuild/RPMS"]
+
+WORKDIR /root/rpmbuild/SPECS/
+COPY SPECS/* ./
+COPY SOURCES/* /root/rpmbuild/SOURCES/
+
+{% if sources_preparation is defined -%}
+# Preparing sources
+{% for command_line in sources_preparation -%}
+RUN {{ command_line }}
+{% endfor %}
+{% endif -%}
+ENTRYPOINT ["rpmbuild", "-ba"]

@@ -1,0 +1,17 @@
+{
+  "el9": {
+    "dockerfile": {
+      "from_image": "quay.io/centos/centos:stream9",
+      "image_preparation": [
+        "dnf -y upgrade",
+        "dnf -y install rpmdevtools",
+        "dnf config-manager --enable crb"
+      ],
+      "sources_preparation": [
+        "for spec_file in *.spec; do dnf builddep -y \"$spec_file\"; done"
+      ]
+    },
+    "packaging_tool": "rpmbuild",
+    "specfile": {}
+  }
+}
