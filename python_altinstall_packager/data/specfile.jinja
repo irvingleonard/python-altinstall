@@ -1,0 +1,76 @@
+{% if initial_macros is defined -%}
+{% for macro in initial_macros -%}
+{{ macro }}
+{% endfor %}
+{% endif -%}
+Name:           python{{ python_version[:2]|join('') }}-altinstall
+Version:        {{ python_version|join('.') }}
+Release:        1%{?dist}
+Summary:        Interpreter of the Python programming language
+
+License:        Python
+URL:            https://www.python.org/
+Source0:        https://www.python.org/ftp/python/%{version}/Python-%{version}.tgz
+
+{% if build_requires is defined -%}
+{% for build_require in build_requires -%}
+BuildRequires:  {{ build_requires }}
+{% endfor %}
+{% endif -%}
+## Fixes
+# disable shebang mangling of python scripts
+%undefine __brp_mangle_shebangs
+# disable the creation of debug RPMs
+%define debug_package %{nil}
+
+%description
+Python is an accessible, high-level, dynamically typed, interpreted programming
+language, designed with an emphasis on code readability.
+It includes an extensive standard library, and has a vast ecosystem of
+third-party libraries.
+
+This uses the upstream method using altinstall which would install in /usr/local
+
+%prep
+%setup -q -n Python-%{version}
+{% if prep_extras is defined -%}
+{% for prep_extra in prep_extras -%}
+{{ prep_extras }}
+{% endfor %}
+{%- endif %}
+%build
+%{_builddir}/Python-%{version}/configure --enable-optimizations --with-lto --enable-loadable-sqlite-extensions
+make buildbottest
+
+%install
+rm -rf %{buildroot}
+make altinstall DESTDIR=%{buildroot}
+# Compress man page
+%{__gzip} --name --best %{buildroot}/usr/local/share/man/man1/python{{ python_version[:2]|join('.') }}.1
+
+%files
+/usr/local/bin/2to3-{{ python_version[:2]|join('.') }}
+/usr/local/bin/idle{{ python_version[:2]|join('.') }}
+/usr/local/bin/pip{{ python_version[:2]|join('.') }}
+/usr/local/bin/pydoc{{ python_version[:2]|join('.') }}
+/usr/local/bin/python{{ python_version[:2]|join('.') }}
+/usr/local/bin/python{{ python_version[:2]|join('.') }}-config
+/usr/local/lib/libpython{{ python_version[:2]|join('.') }}.a
+/usr/local/lib/pkgconfig/python-{{ python_version[:2]|join('.') }}.pc
+/usr/local/lib/pkgconfig/python-{{ python_version[:2]|join('.') }}-embed.pc
+/usr/local/include/python{{ python_version[:2]|join('.') }}
+/usr/local/lib/python{{ python_version[:2]|join('.') }}
+%doc /usr/local/share/man/man1/python{{ python_version[:2]|join('.') }}.1.gz
+{% if changelog is defined -%}
+
+%changelog
+{% for entry, description in changelog.items() -%}
+* {{ entry }}
+- {{ description }}
+{% endfor %}
+{% endif -%}
+
+
+%changelog
+* Thu Oct 3 2024 Irving Leonard <irvingleonard@github.com> 3.12.7-1
+- Initial RPM release

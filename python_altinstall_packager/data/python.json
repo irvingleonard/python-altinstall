@@ -1,0 +1,18 @@
+{
+  "3.10": {
+    "doc_file": "%{buildroot}/usr/local/share/man/man1/python{{ python_version[:2]|join('.') }}.1",
+    "installed_files": [
+      /usr/local/bin/2to3-{{ python_version[:2]|join('.') }}
+      /usr/local/bin/idle{{ python_version[:2]|join('.') }}
+      /usr/local/bin/pip{{ python_version[:2]|join('.') }}
+      /usr/local/bin/pydoc{{ python_version[:2]|join('.') }}
+      /usr/local/bin/python{{ python_version[:2]|join('.') }}
+      /usr/local/bin/python{{ python_version[:2]|join('.') }}-config
+      /usr/local/lib/libpython{{ python_version[:2]|join('.') }}.a
+      /usr/local/lib/pkgconfig/python-{{ python_version[:2]|join('.') }}.pc
+      /usr/local/lib/pkgconfig/python-{{ python_version[:2]|join('.') }}-embed.pc
+      /usr/local/include/python{{ python_version[:2]|join('.') }}
+      /usr/local/lib/python{{ python_version[:2]|join('.') }}
+    ]
+  }
+}
