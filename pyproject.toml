@@ -25,6 +25,7 @@ classifiers = [
 ]
 dependencies = [
 	'jinja2',
+	'semantic-version',
 	'simplifiedapp',
 ]
 
