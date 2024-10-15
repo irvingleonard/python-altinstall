@@ -12,9 +12,9 @@ License:        Python
 URL:            https://www.python.org/
 Source0:        https://www.python.org/ftp/python/%{version}/Python-%{version}.tgz
 
-{% if build_requires is defined -%}
-{% for build_require in build_requires -%}
-BuildRequires:  {{ build_requires }}
+{% if requires is defined -%}
+{% for require in requires -%}
+BuildRequires:  {{ require }}
 {% endfor %}
 {% endif -%}
 ## Fixes
@@ -61,16 +61,13 @@ make altinstall DESTDIR=%{buildroot}
 /usr/local/include/python{{ python_version[:2]|join('.') }}
 /usr/local/lib/python{{ python_version[:2]|join('.') }}
 %doc /usr/local/share/man/man1/python{{ python_version[:2]|join('.') }}.1.gz
-{% if changelog is defined -%}
+{%- if changelog is defined %}
 
 %changelog
-{% for entry, description in changelog.items() -%}
+{%- for entry, messages in changelog.items() %}
 * {{ entry }}
-- {{ description }}
-{% endfor %}
-{% endif -%}
-
-
-%changelog
-* Thu Oct 3 2024 Irving Leonard <irvingleonard@github.com> 3.12.7-1
-- Initial RPM release
+{%- for messages in messages %}
+- {{ messages }}
+{%- endfor %}
+{%- endfor %}
+{%- endif %}

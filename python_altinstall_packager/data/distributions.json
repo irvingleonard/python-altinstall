@@ -12,6 +12,18 @@
       ]
     },
     "packaging_tool": "rpmbuild",
-    "specfile": {}
+    "requires": [
+      "bzip2-devel",
+      "gcc",
+      "gcc-c++",
+      "gdbm-devel",
+      "libffi-devel",
+      "libnsl2-devel",
+      "libuuid-devel",
+      "openssl-devel",
+      "readline-devel",
+      "sqlite-devel",
+      "tk-devel"
+    ]
   }
 }

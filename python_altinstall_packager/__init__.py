@@ -3,10 +3,12 @@
 
 """
 
+from json import dumps as json_dumps, loads as json_loads
 from logging import getLogger
 from pathlib import Path
 
 from . import _data as DATA
+from .specfile_ import Changelog
 
 try:
 	from jinja2 import Environment as Jinja2Environment
@@ -27,29 +29,19 @@ class SpecfileTemplate(dict):
 	
 	"""
 	
-	KNOWLEDGE_BASE_FILE = Path(__file__).parent / 'data' / 'distros.json'
 	TEMPLATE_NAME = 'specfile.jinja'
+	_values_loaded = False
 	
 	def __getattr__(self, item):
 		"""
 
 		"""
 		
-		if item == 'client':
-			if docker_from_env is None:
-				raise ImportError('The "docker" package is required by {}'.format(type(self).__name__))
-			value = docker_from_env()
-		elif item == 'defaults':
+		if item == 'requires':
 			if self.dist not in DATA.distributions:
 				raise ValueError('Missing "{}" distribution in knowledge base'.format(self.dist))
 			value = DATA.distributions[self.dist]
-			if 'dockerfile' in value:
-				self.update(value['dockerfile'])
-		elif item == 'packaging_tool':
-			if 'packaging_tool' not in self.defaults:
-				raise ValueError(
-					'Missing "packaging_tool" section for "{}" distribution in knowledge base'.format(self.dist))
-			value = self.defaults['packaging_tool']
+			value = value['requires'] if 'requires' in value else None
 		elif item == 'template_file_path':
 			value = Path(__file__).parent / 'data' / self.TEMPLATE_NAME
 			if not value.is_file():
@@ -60,15 +52,20 @@ class SpecfileTemplate(dict):
 		self.__setattr__(item, value)
 		return value
 	
-	def __init__(self, dist, python_version, /, **details):
+	def __init__(self, dist, python_version, changelog_file='changelog.json', /, **details):
 		"""
 		
 		"""
 		
 		super().__init__(details)
+		self.dist = dist
 		if isinstance(python_version, str):
 			python_version = python_version.split('.')
 		self['python_version'] = python_version
+		if self.requires is not None:
+			self['requires'] = self.requires
+		changelog_file = Path(changelog_file)
+		self['changelog'] = Changelog(json_loads(changelog_file.read_text()))
 	
 	def __str__(self):
 		"""
@@ -80,6 +77,14 @@ class SpecfileTemplate(dict):
 		jinja_env = Jinja2Environment()
 		result = jinja_env.from_string(self.template_file_path.read_text())
 		return result.render(self)
+	
+	def _load_values(self):
+		"""
+		
+		:return:
+		"""
+		
+		self.update(self.de)
 
 
 class DockerfileTemplate(dict):
@@ -87,7 +92,6 @@ class DockerfileTemplate(dict):
 
 	"""
 	
-	KNOWLEDGE_BASE_FILE = Path(__file__).parent / 'data' / 'distros.json'
 	TAG_NAME = 'python_altinstall_packager'
 	TEMPLATE_NAMES = 'dockerfile_{}_template.jinja'
 	
@@ -196,8 +200,21 @@ class PythonAltinstallPackager:
 	
 	def test(self):
 		
+		from .specfile_ import Changelog, ChangelogEntry
 		
-		# return str(SpecfileTemplate('el9', '3.10.20'))
+		# value = ChangelogEntry.from_str('Thu Oct 3 2024 Irving Leonard <irvingleonard@github.com> 3.12.7-1')
+		# return value
+		# return str(value)
+		#
+		# value = ChangelogEntry(date.today(), 'Irv LEo <irvleo@example.net>', '4.5.6-10')
+		# return str(value)
+		# changelog_file = Path('changelog.json')
+		# ch = Changelog(json_loads(changelog_file.read_text()))
+		# return ch
+		# return str(ch)
+		# return ch('Irv LEo <irvleo@example.net>', '4.5.6', '11', ['new testing'])
+		
+		return str(SpecfileTemplate('el9', '3.10.20'))
 		
 		test_dir = Path.cwd() / 'testing'
 		test_dir.mkdir(exist_ok=True)
