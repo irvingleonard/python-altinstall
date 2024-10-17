@@ -3,9 +3,9 @@
 {{ macro }}
 {% endfor %}
 {% endif -%}
-Name:           python{{ python_version[:2]|join('') }}-altinstall
+Name:           {{ package_name }}
 Version:        {{ python_version|join('.') }}
-Release:        1%{?dist}
+Release:        {{ build_number }}%{?dist}
 Summary:        Interpreter of the Python programming language
 
 License:        Python
@@ -45,29 +45,24 @@ make buildbottest
 %install
 rm -rf %{buildroot}
 make altinstall DESTDIR=%{buildroot}
+{%- if doc_file is defined %}
 # Compress man page
-%{__gzip} --name --best %{buildroot}/usr/local/share/man/man1/python{{ python_version[:2]|join('.') }}.1
+%{__gzip} --name --best {{ doc_file }}
+{%- endif %}
+{%- if (installed_files is defined) or (doc_file is defined) %}
 
 %files
-/usr/local/bin/2to3-{{ python_version[:2]|join('.') }}
-/usr/local/bin/idle{{ python_version[:2]|join('.') }}
-/usr/local/bin/pip{{ python_version[:2]|join('.') }}
-/usr/local/bin/pydoc{{ python_version[:2]|join('.') }}
-/usr/local/bin/python{{ python_version[:2]|join('.') }}
-/usr/local/bin/python{{ python_version[:2]|join('.') }}-config
-/usr/local/lib/libpython{{ python_version[:2]|join('.') }}.a
-/usr/local/lib/pkgconfig/python-{{ python_version[:2]|join('.') }}.pc
-/usr/local/lib/pkgconfig/python-{{ python_version[:2]|join('.') }}-embed.pc
-/usr/local/include/python{{ python_version[:2]|join('.') }}
-/usr/local/lib/python{{ python_version[:2]|join('.') }}
-%doc /usr/local/share/man/man1/python{{ python_version[:2]|join('.') }}.1.gz
+{%- if installed_files is defined %}
+{%- for installed_file in installed_files %}
+{{ installed_file }}
+{%- endfor %}
+{%- endif %}
+{%- if doc_file is defined %}
+%doc {{ doc_file }}.gz
+{%- endif %}
+{%- endif %}
 {%- if changelog is defined %}
 
 %changelog
-{%- for entry, messages in changelog.items() %}
-* {{ entry }}
-{%- for messages in messages %}
-- {{ messages }}
-{%- endfor %}
-{%- endfor %}
+{{ changelog }}
 {%- endif %}
