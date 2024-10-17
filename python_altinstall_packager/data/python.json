@@ -1,18 +1,22 @@
 {
   "3.10": {
-    "doc_file": "%{buildroot}/usr/local/share/man/man1/python{{ python_version[:2]|join('.') }}.1",
+    "build_commands": [
+      "%{_builddir}/Python-%{version}/configure --enable-optimizations --with-lto --enable-loadable-sqlite-extensions",
+      "make buildbottest"
+    ],
+    "doc_file": "%{buildroot}/usr/local/share/man/man1/python3.10.1",
     "installed_files": [
-      /usr/local/bin/2to3-{{ python_version[:2]|join('.') }}
-      /usr/local/bin/idle{{ python_version[:2]|join('.') }}
-      /usr/local/bin/pip{{ python_version[:2]|join('.') }}
-      /usr/local/bin/pydoc{{ python_version[:2]|join('.') }}
-      /usr/local/bin/python{{ python_version[:2]|join('.') }}
-      /usr/local/bin/python{{ python_version[:2]|join('.') }}-config
-      /usr/local/lib/libpython{{ python_version[:2]|join('.') }}.a
-      /usr/local/lib/pkgconfig/python-{{ python_version[:2]|join('.') }}.pc
-      /usr/local/lib/pkgconfig/python-{{ python_version[:2]|join('.') }}-embed.pc
-      /usr/local/include/python{{ python_version[:2]|join('.') }}
-      /usr/local/lib/python{{ python_version[:2]|join('.') }}
+      "/usr/local/bin/2to3-3.10",
+      "/usr/local/bin/idle3.10",
+      "/usr/local/bin/pip3.10",
+      "/usr/local/bin/pydoc3.10",
+      "/usr/local/bin/python3.10",
+      "/usr/local/bin/python3.10-config",
+      "/usr/local/lib/libpython3.10.a",
+      "/usr/local/lib/pkgconfig/python-3.10.pc",
+      "/usr/local/lib/pkgconfig/python-3.10-embed.pc",
+      "/usr/local/include/python3.10",
+      "/usr/local/lib/python3.10"
     ]
   }
 }
