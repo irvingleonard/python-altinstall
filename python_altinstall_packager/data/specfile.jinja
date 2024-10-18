@@ -12,9 +12,9 @@ License:        Python
 URL:            https://www.python.org/
 Source0:        https://www.python.org/ftp/python/%{version}/Python-%{version}.tgz
 
-{% if requires is defined -%}
-{% for require in requires -%}
-BuildRequires:  {{ require }}
+{% if build_requires is defined -%}
+{% for build_require in build_requires -%}
+BuildRequires:  {{ build_require }}
 {% endfor %}
 {% endif -%}
 ## Fixes
@@ -33,12 +33,18 @@ This uses the upstream method using altinstall which would install in /usr/local
 
 %prep
 %setup -q -n Python-%{version}
-{% if prep_extras is defined -%}
-{% for prep_extra in prep_extras -%}
+{%- if prep_extras is defined %}
+{%- for prep_extra in prep_extras %}
 {{ prep_extras }}
-{% endfor %}
+{%- endfor %}
 {%- endif %}
+
 %build
+{%- if pre_build_commands is defined %}
+{%- for pre_build_command in pre_build_commands %}
+{{ pre_build_command }}
+{%- endfor %}
+{%- endif %}
 %{_builddir}/Python-%{version}/configure --enable-optimizations --with-lto --enable-loadable-sqlite-extensions
 make buildbottest
 
