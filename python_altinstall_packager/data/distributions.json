@@ -1,5 +1,18 @@
 {
   "el9": {
+    "build_requires": [
+      "bzip2-devel",
+      "gcc",
+      "gcc-c++",
+      "gdbm-devel",
+      "libffi-devel",
+      "libnsl2-devel",
+      "libuuid-devel",
+      "openssl-devel",
+      "readline-devel",
+      "sqlite-devel",
+      "tk-devel"
+    ],
     "dockerfile": {
       "from_image": "quay.io/centos/centos:stream9",
       "image_preparation": [
@@ -12,18 +25,8 @@
       ]
     },
     "packaging_tool": "rpmbuild",
-    "requires": [
-      "bzip2-devel",
-      "gcc",
-      "gcc-c++",
-      "gdbm-devel",
-      "libffi-devel",
-      "libnsl2-devel",
-      "libuuid-devel",
-      "openssl-devel",
-      "readline-devel",
-      "sqlite-devel",
-      "tk-devel"
+    "pre_build_commands": [
+        "export CXX=/usr/bin/g++"
     ]
   }
 }
