@@ -7,7 +7,7 @@ from atexit import register as atexit_register
 from json import dumps as json_dumps, loads as json_loads
 from logging import getLogger
 from pathlib import Path
-from shutil import rmtree
+from shutil import copy2, rmtree
 from tempfile import mkdtemp
 from urllib.parse import urlparse
 
@@ -27,6 +27,7 @@ from .specfile_ import Changelog
 
 __version__ = '0.1.0.dev0'
 
+DEFAULT_CHANGELOG_FILE_NAME = 'changelog.json'
 LOGGER = getLogger(__name__)
 
 
@@ -35,8 +36,8 @@ class SpecfileTemplate(dict):
 	
 	"""
 	
+	EXTRA_COMPUTED_KEYS = ('changelog',)
 	TEMPLATE_NAME = 'specfile.jinja'
-	_values_loaded = False
 	
 	def __call__(self, destination_dir=Path.cwd()):
 		"""
@@ -56,11 +57,13 @@ class SpecfileTemplate(dict):
 			if self.dist not in DATA.distributions:
 				raise ValueError('Missing "{}" distribution in knowledge base'.format(self.dist))
 			value = DATA.distributions[self.dist]
+		elif item == 'file_name':
+			value = self['package_name'] + '.spec'
 		elif item == 'python_data':
 			for ver_len in range(len(self['python_version']), -1, -1):
 				python_version = '.'.join(self['python_version'][:ver_len])
 				if not python_version:
-					raise ValueError('Missing "{}" python in knowledge base'.format(python_version))
+					raise ValueError('Missing "{}" python in knowledge base'.format(self['python_version']))
 				if python_version in DATA.python:
 					value = DATA.python[python_version]
 					break
@@ -74,7 +77,7 @@ class SpecfileTemplate(dict):
 		self.__setattr__(item, value)
 		return value
 	
-	def __init__(self, dist, python_version, changelog_file='changelog.json', /, **details):
+	def __init__(self, dist, python_version, changelog_file=DEFAULT_CHANGELOG_FILE_NAME, /, **details):
 		"""
 		
 		"""
@@ -86,7 +89,41 @@ class SpecfileTemplate(dict):
 		self['python_version'] = python_version
 		self['package_name'] = 'python{}-altinstall'.format(''.join(python_version[:2]))
 		self.changelog_file = Path(changelog_file)
+		LOGGER.debug('Working with: %s', repr(self))
 	
+	def __iter__(self):
+		"""
+
+		:return:
+		"""
+		
+		for key in super().keys():
+			yield key
+		for key in self.distro_data.keys():
+			yield key
+		for key in self.python_data.keys():
+			yield key
+		for key in self.EXTRA_COMPUTED_KEYS:
+			yield key
+	
+	def __missing__(self, key):
+		"""
+		
+		:param key:
+		:return:
+		"""
+		
+		if key == 'changelog':
+			value = Changelog(json_loads(self.changelog_file.read_text()))
+		elif key in self.distro_data:
+			return self.distro_data[key]
+		elif key in self.python_data:
+			return self.python_data[key]
+		else:
+			raise KeyError(key)
+		
+		return value
+		
 	def __str__(self):
 		"""
 
@@ -96,22 +133,40 @@ class SpecfileTemplate(dict):
 			raise ImportError('The "jinja2" package is required by {}'.format(type(self).__name__))
 		jinja_env = Jinja2Environment()
 		result = jinja_env.from_string(self.template_file_path.read_text())
-		self._load_values()
 		return result.render(self)
 	
-	def _load_values(self):
+	def __repr__(self):
+		"""Magic representation
+		An evaluable python expression describing the current specfile template object
+		
+		:returns str: a valid python string to recreate this object
+		"""
+		
+		arguments = [self.dist, self['python_version']]
+		if str(self.changelog_file) != DEFAULT_CHANGELOG_FILE_NAME:
+			arguments.append(self.changelog_file)
+		CALCULATED_VALUES = ('python_version', 'package_name')
+		kwargs = {key: value for key, value in self.items() if key not in CALCULATED_VALUES}
+		arguments += ['='.join((key, str(value))) for key, value in kwargs.items()]
+		return '{}({})'.format(type(self).__name__, ', '.join(map(str, arguments)))
+	
+	def items(self):
 		"""
 		
 		:return:
 		"""
 		
-		if 'build_number' not in self:
-			self['build_number'] = 1
-		if 'requires' in self.distro_data:
-			self['requires'] = self.distro_data['requires']
-		self.update(self.python_data)
-		self['changelog'] = Changelog(json_loads(self.changelog_file.read_text()))
+		for key in self.keys():
+			yield key, self[key]
+	
+	def keys(self):
+		"""
 		
+		:return:
+		"""
+		
+		return self.__iter__()
+
 	def write_file(self, specs_dir=Path.cwd()):
 		"""
 		
@@ -121,8 +176,8 @@ class SpecfileTemplate(dict):
 		
 		specs_dir = Path(specs_dir)
 		specs_dir.mkdir(parents=True, exist_ok=True)
-		file_name = specs_dir / (self['package_name'] + '.spec')
-		file_name.write_text(str(self))
+		file_name = specs_dir / self.file_name
+		file_name.write_text(str(self), newline='\n')
 		return file_name
 
 
@@ -166,6 +221,8 @@ class DockerfileTemplate(dict):
 			value = DATA.distributions[self.dist]
 			if 'dockerfile' in value:
 				self.update(value['dockerfile'])
+		elif item == 'docker_tag':
+			value = ':'.join((self.TAG_NAME, self.dist))
 		elif item == 'dockerfile':
 			value = self.root_dir / 'Dockerfile'
 		elif item == 'packaging_tool':
@@ -215,22 +272,23 @@ class DockerfileTemplate(dict):
 			result = self.client.images.build(path=str(dockerfile.parent), tag=name_tag, rm=True, forcerm=True)
 		return result
 	
-	def run(self, fresh_build=True, /, **run_arguments):
+	def run(self, spec_file, fresh_build=True, /, **run_arguments):
 		"""
 
 		"""
 		
 		if fresh_build:
-			self.build(self.TAG_NAME)
+			self.build(self.docker_tag)
 		
 		run_arguments_ = {
-			'name': self.TAG_NAME + '_temp',
+			'name': self.docker_tag.replace(':', '_') + '_temp',
 			'remove': True,
 			'stderr': True,
 			'stdout': True,
 		}
 		run_arguments_.update(run_arguments)
-		return self.client.containers.run(self.TAG_NAME, **run_arguments_)
+		LOGGER.warning('Running container with: %s | %s', self.docker_tag, run_arguments_)
+		return self.client.containers.run(self.docker_tag, spec_file, **run_arguments_)
 	
 	def write_file(self, output_dir=None):
 		"""
@@ -250,15 +308,32 @@ class PythonAltinstallPackager:
 	
 	"""
 	
+	CHANGELOG_NAMING_CONVENTION = '{python_version}-changelog.json'
 	DOWNLOAD_PATH_TEMPLATE = r'https://www.python.org/ftp/python/{version}/Python-{version}.tgz'
 	
-	def __init__(self, dist_dir=Path.cwd()):
+	def __getattr__(self, item):
+		"""
+
+		"""
+		
+		if item == 'tarball':
+			output_directory = Path(mkdtemp()).absolute()
+			atexit_register(rmtree, output_directory, ignore_errors=True)
+			value = self.download_tarball(self._python_version, destination_dir=output_directory)
+		else:
+			raise AttributeError(item)
+		
+		self.__setattr__(item, value)
+		return value
+	def __init__(self, python_version, root_directory=Path.cwd()):
 		"""
 		
 		:param build_dir:
 		"""
 		
-		self._dist_dir = dist_dir
+		self._root_directory = Path(root_directory)
+		self._python_version = python_version
+		self._python_minor_version = '.'.join(python_version.split('.')[:2])
 		# if build_dir is None:
 		# 	self._build_dir = Path(mkdtemp()).absolute()
 		# 	atexit_register(rmtree, build_dir, ignore_errors=True)
@@ -306,24 +381,42 @@ class PythonAltinstallPackager:
 		
 		return local_file
 	
-	def prepare_build(self, dist, python_version, output_directory=None):
+	def build_rpm(self, dist, output_directory=None, dist_dir=None):
 		"""
 		
 		:return:
 		"""
 		
 		if output_directory is None:
-			output_directory = self._build_dir
+			output_directory = Path(mkdtemp()).absolute()
+			atexit_register(rmtree, output_directory, ignore_errors=True)
 		else:
 			output_directory = Path(output_directory)
-		output_directory.mkdir(parents=True, exist_ok=True)
-		self.download_tarball(version=python_version, destination_dir=(output_directory / 'SOURCES'))
-		SpecfileTemplate(dist, python_version).write_file(specs_dir=(output_directory / 'SPECS'))
-		DockerfileTemplate(dist, python_version).write_file(output_dir=output_directory)
+		sources_dir = output_directory / 'SOURCES'
+		sources_dir.mkdir(parents=True, exist_ok=True)
+		copy2(self.tarball, sources_dir)
+		specfile = SpecfileTemplate(dist, self._python_version, self.get_changelog(dist))
+		specfile.write_file(specs_dir=(output_directory / 'SPECS'))
+		if dist_dir is None:
+			dockerfile = DockerfileTemplate(dist, self._python_version, output_directory).write_file()
+			dockerfile.write_file()
+			return dockerfile
+		else:
+			host_dist_dir = Path(dist_dir).absolute()
+			host_dist_dir.mkdir(parents=True, exist_ok=True)
+			volumes = {str(host_dist_dir): volume for volume in DATA.volumes[DATA.distributions[dist]['packaging_tool']]}
+			return DockerfileTemplate(dist, self._python_version, output_directory).run(specfile.file_name, volumes=volumes)
+	
+	def get_changelog(self, dist):
+		"""
+		
+		:param dist:
+		:return:
+		"""
+		
+		return self._root_directory / dist / self.CHANGELOG_NAMING_CONVENTION.format(python_version=self._python_minor_version)
 	
 	def test(self):
-		
-		from .specfile_ import Changelog, ChangelogEntry
 		
 		# value = ChangelogEntry.from_str('Thu Oct 3 2024 Irving Leonard <irvingleonard@github.com> 3.12.7-1')
 		# return value
