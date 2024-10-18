@@ -18,5 +18,25 @@
       "/usr/local/include/python3.10",
       "/usr/local/lib/python3.10"
     ]
+  },
+  "3.12": {
+    "build_commands": [
+      "%{_builddir}/Python-%{version}/configure --enable-optimizations --with-lto --enable-loadable-sqlite-extensions",
+      "make buildbottest"
+    ],
+    "doc_file": "%{buildroot}/usr/local/share/man/man1/python3.12.1",
+    "installed_files": [
+      "/usr/local/bin/2to3-3.12",
+      "/usr/local/bin/idle3.12",
+      "/usr/local/bin/pip3.12",
+      "/usr/local/bin/pydoc3.12",
+      "/usr/local/bin/python3.12",
+      "/usr/local/bin/python3.12-config",
+      "/usr/local/lib/libpython3.12.a",
+      "/usr/local/lib/pkgconfig/python-3.12.pc",
+      "/usr/local/lib/pkgconfig/python-3.12-embed.pc",
+      "/usr/local/include/python3.12",
+      "/usr/local/lib/python3.12"
+    ]
   }
 }
