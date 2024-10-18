@@ -1,0 +1,6 @@
+{
+  "rpmbuild": [
+    {"bind": "/root/rpmbuild/SRPMS", "mode": "rw"},
+    {"bind": "/root/rpmbuild/RPMS", "mode": "rw"}
+  ]
+}
