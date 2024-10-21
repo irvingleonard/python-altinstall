@@ -4,13 +4,15 @@
 """
 
 from atexit import register as atexit_register
-from json import dumps as json_dumps, loads as json_loads
+from json import loads as json_loads
 from logging import getLogger
 from pathlib import Path
+from re import match as re_match
 from shutil import copy2, rmtree
 from tempfile import mkdtemp
 from urllib.parse import urlparse
 
+from bs4 import BeautifulSoup
 from requests import get as requests_get
 
 try:
@@ -310,6 +312,8 @@ class PythonAltinstallPackager:
 	
 	CHANGELOG_NAMING_CONVENTION = '{python_version}-changelog.json'
 	DOWNLOAD_PATH_TEMPLATE = r'https://www.python.org/ftp/python/{version}/Python-{version}.tgz'
+	PYTHON_DOWNLOADS_URL = 'https://www.python.org/ftp/python'
+	PYTHON_VERSION_REGEXP = r'^(\d+\.\d+(?:\.\d+)?)/$'
 	
 	def __getattr__(self, item):
 		"""
@@ -353,6 +357,21 @@ class PythonAltinstallPackager:
 		
 		for version in versions:
 			print(version, distributions)
+	
+	def current_python_versions(self):
+		"""
+		
+		:return:
+		"""
+		
+		downloads_html = requests_get(self.PYTHON_DOWNLOADS_URL)
+		downloads_soup = BeautifulSoup(downloads_html.text, features='html.parser')
+		versions = []
+		for a_link in downloads_soup.find_all('a'):
+			a_version = re_match(self.PYTHON_VERSION_REGEXP, a_link.text)
+			if a_version is not None:
+				versions.append(a_version.groups()[0])
+		return tuple(versions)
 	
 	def download_tarball(self, version, stream_chunk_size=1048576, destination_dir=None, overwrite=False):
 		"""
