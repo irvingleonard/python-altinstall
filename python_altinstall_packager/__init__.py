@@ -13,7 +13,8 @@ from tempfile import mkdtemp
 from urllib.parse import urlparse
 
 from bs4 import BeautifulSoup
-from requests import get as requests_get
+from requests import get as requests_get, head as requests_head
+from semantic_version import Version as SemanticVersion
 
 try:
 	from jinja2 import Environment as Jinja2Environment
@@ -306,13 +307,16 @@ class DockerfileTemplate(dict):
 
 
 class PythonAltinstallPackager:
-	"""
-	
+	"""Creates python-altinstall artifacts for different operating systems
+	Python.org provides "parallel" installers for Windows and macOS. For every other operating system, python should be built from the source tarball. There's also the issue that most operating systems ship their own versions of python that they use internally which are usually impossible to replace without breaking major stuff.
+	The alternative is to use a "different" build of python called "altinstall" which installs python in "/usr/local/" with fully version named binaries. This way multiple major/minor versions can be installed simultaneously.
+	This class is about handling the process of creating native installers for such builds.
 	"""
 	
 	CHANGELOG_NAMING_CONVENTION = '{python_version}-changelog.json'
 	DOWNLOAD_PATH_TEMPLATE = r'https://www.python.org/ftp/python/{version}/Python-{version}.tgz'
 	PYTHON_DOWNLOADS_URL = 'https://www.python.org/ftp/python'
+	PYTHON_TARBALL_DOWNLOAD_PATH = '{version}/Python-{version}.tgz'
 	PYTHON_VERSION_REGEXP = r'^(\d+\.\d+(?:\.\d+)?)/$'
 	
 	def __getattr__(self, item):
@@ -320,24 +324,34 @@ class PythonAltinstallPackager:
 
 		"""
 		
-		if item == 'tarball':
-			output_directory = Path(mkdtemp()).absolute()
-			atexit_register(rmtree, output_directory, ignore_errors=True)
-			value = self.download_tarball(self._python_version, destination_dir=output_directory)
+		if item == '_tarballs_dir':
+			value = Path(mkdtemp()).absolute()
+			atexit_register(rmtree, value, ignore_errors=True)
+		elif item == 'latest_python_versions':
+			value = {version[:2]: version for version in self.current_python_versions(latest_major_minor=True, return_str=False)}
+			del value[max(value)]
+		elif item == 'remote_tarballs':
+			value = self.public_python_tarballs()
+		elif item[:8] == 'tarball_':
+			version = item[8:].split('_')
+			value = version
+			# output_directory = Path(mkdtemp()).absolute()
+			# atexit_register(rmtree, output_directory, ignore_errors=True)
+			# value = self.download_tarball(self._python_version, destination_dir=output_directory)
 		else:
 			raise AttributeError(item)
 		
 		self.__setattr__(item, value)
 		return value
+	
 	def __init__(self, python_version, root_directory=Path.cwd()):
 		"""
 		
-		:param build_dir:
 		"""
 		
 		self._root_directory = Path(root_directory)
-		self._python_version = python_version
-		self._python_minor_version = '.'.join(python_version.split('.')[:2])
+		# self._python_version = python_version
+		# self._python_minor_version = '.'.join(python_version.split('.')[:2])
 		# if build_dir is None:
 		# 	self._build_dir = Path(mkdtemp()).absolute()
 		# 	atexit_register(rmtree, build_dir, ignore_errors=True)
@@ -358,20 +372,29 @@ class PythonAltinstallPackager:
 		for version in versions:
 			print(version, distributions)
 	
-	def current_python_versions(self):
+	def current_python_versions(self, latest_major_minor=False, return_str=True):
 		"""
 		
 		:return:
 		"""
 		
-		downloads_html = requests_get(self.PYTHON_DOWNLOADS_URL)
-		downloads_soup = BeautifulSoup(downloads_html.text, features='html.parser')
-		versions = []
-		for a_link in downloads_soup.find_all('a'):
-			a_version = re_match(self.PYTHON_VERSION_REGEXP, a_link.text)
-			if a_version is not None:
-				versions.append(a_version.groups()[0])
-		return tuple(versions)
+		if latest_major_minor:
+			major_minor_versions = {}
+			for version in self.remote_tarballs:
+				major_minor = tuple(version[:2])
+				if major_minor not in major_minor_versions:
+					major_minor_versions[major_minor] = version
+				elif version > major_minor_versions[major_minor]:
+					major_minor_versions[major_minor] = version
+			if return_str:
+				return tuple(['.'.join(map(str, version)) for version in major_minor_versions.values()])
+			else:
+				return tuple(major_minor_versions.values())
+		else:
+			if return_str:
+				return tuple([str(version) for version in self.remote_tarballs])
+			else:
+				return tuple(self.remote_tarballs.keys())
 	
 	def download_tarball(self, version, stream_chunk_size=1048576, destination_dir=None, overwrite=False):
 		"""
@@ -417,7 +440,7 @@ class PythonAltinstallPackager:
 		specfile = SpecfileTemplate(dist, self._python_version, self.get_changelog(dist))
 		specfile.write_file(specs_dir=(output_directory / 'SPECS'))
 		if dist_dir is None:
-			dockerfile = DockerfileTemplate(dist, self._python_version, output_directory).write_file()
+			dockerfile = DockerfileTemplate(dist, self._python_version, output_directory)
 			dockerfile.write_file()
 			return dockerfile
 		else:
@@ -435,7 +458,42 @@ class PythonAltinstallPackager:
 		
 		return self._root_directory / dist / self.CHANGELOG_NAMING_CONVENTION.format(python_version=self._python_minor_version)
 	
+	def latest_version_from_major_minor(self, major_minor_version):
+		"""
+		
+		:param full_version:
+		:return:
+		"""
+		
+		pass
+	
+	def public_python_tarballs(self):
+		"""
+		
+		:return:
+		"""
+		
+		downloads_html = requests_get(self.PYTHON_DOWNLOADS_URL)
+		downloads_soup = BeautifulSoup(downloads_html.text, features='html.parser')
+		public_tarballs = {}
+		for a_link in downloads_soup.find_all('a'):
+			a_version = re_match(self.PYTHON_VERSION_REGEXP, a_link.text)
+			if a_version is not None:
+				tarball_path = self.PYTHON_DOWNLOADS_URL + '/' + self.PYTHON_TARBALL_DOWNLOAD_PATH.format(version=a_version.group(1))
+				if requests_head(tarball_path).ok:
+					try:
+						public_tarballs[SemanticVersion(a_version.group(1))] = tarball_path
+					except ValueError:
+						public_tarballs[SemanticVersion(a_version.group(1) + '.0')] = tarball_path
+				else:
+					LOGGER.warning('Found version without tarball: %s', a_version.group(1))
+		
+		return public_tarballs
+	
 	def test(self):
+		
+		# return self.latest_python_versions
+		return self.tarball_3_9
 		
 		# value = ChangelogEntry.from_str('Thu Oct 3 2024 Irving Leonard <irvingleonard@github.com> 3.12.7-1')
 		# return value
@@ -451,9 +509,9 @@ class PythonAltinstallPackager:
 		
 		# return str(SpecfileTemplate('el9', '3.10.20'))
 		
-		test_dir = Path.cwd() / 'testing'
+		# test_dir = Path.cwd() / 'testing'
 		
-		test_dir.mkdir(exist_ok=True)
-		with DockerfileTemplate('el9', '3.10.20', test_dir, True) as dockerfile:
-			pass
-		
+		# test_dir.mkdir(exist_ok=True)
+		# with DockerfileTemplate('el9', '3.10.20', test_dir, True) as dockerfile:
+		# 	pass
+	
